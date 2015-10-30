@@ -602,7 +602,7 @@ void _glfwPlatformMakeContextCurrent(_GLFWwindow* window)
 void _glfwPlatformSwapBuffers(_GLFWwindow* window)
 {
     // HACK: Use DwmFlush when desktop composition is enabled
-    if (_glfwIsCompositionEnabled() && !window->monitor)
+    if (_glfwIsCompositionEnabled() && !window->fullscreen)
     {
         int count = abs(window->wgl.interval);
         while (count--)
@@ -620,7 +620,7 @@ void _glfwPlatformSwapInterval(int interval)
 
     // HACK: Disable WGL swap interval when desktop composition is enabled to
     //       avoid interfering with DWM vsync
-    if (_glfwIsCompositionEnabled() && !window->monitor)
+    if (_glfwIsCompositionEnabled() && !window->fullscreen)
         interval = 0;
 
     if (window->wgl.EXT_swap_control)

@@ -139,7 +139,7 @@ GLFWAPI GLFWwindow* glfwCreateWindow(int width, int height,
     wndconfig.width   = width;
     wndconfig.height  = height;
     wndconfig.title   = title;
-    wndconfig.monitor = (_GLFWmonitor*) monitor;
+    wndconfig.monitor = (_GLFWmonitor*) (monitor ? monitor : glfwGetPrimaryMonitor());
     ctxconfig.share   = (_GLFWwindow*) share;
 
     if (ctxconfig.share)
@@ -151,7 +151,7 @@ GLFWAPI GLFWwindow* glfwCreateWindow(int width, int height,
         }
     }
 
-    if (wndconfig.monitor)
+    if (wndconfig.fullscreen)
     {
         wndconfig.resizable = GLFW_TRUE;
         wndconfig.visible   = GLFW_TRUE;
@@ -214,7 +214,7 @@ GLFWAPI GLFWwindow* glfwCreateWindow(int width, int height,
         _glfwPlatformMakeContextCurrent(previous);
     }
 
-    if (wndconfig.monitor)
+    if (wndconfig.fullscreen)
     {
         int width, height;
         _glfwPlatformGetWindowSize(window, &width, &height);
@@ -255,6 +255,7 @@ void glfwDefaultWindowHints(void)
     _glfw.hints.window.decorated   = GLFW_TRUE;
     _glfw.hints.window.focused     = GLFW_TRUE;
     _glfw.hints.window.autoIconify = GLFW_TRUE;
+    _glfw.hints.window.fullscreen  = GLFW_FALSE;
 
     // The default is 24 bits of color, 24 bits of depth and 8 bits of stencil,
     // double buffered
@@ -329,6 +330,9 @@ GLFWAPI void glfwWindowHint(int target, int hint)
             break;
         case GLFW_FOCUSED:
             _glfw.hints.window.focused = hint ? GLFW_TRUE : GLFW_FALSE;
+            break;
+        case GLFW_FULLSCREEN:
+            _glfw.hints.window.fullscreen = hint ? GLFW_TRUE : GLFW_FALSE;
             break;
         case GLFW_AUTO_ICONIFY:
             _glfw.hints.window.autoIconify = hint ? GLFW_TRUE : GLFW_FALSE;
@@ -452,7 +456,7 @@ GLFWAPI void glfwSetWindowPos(GLFWwindow* handle, int xpos, int ypos)
 
     _GLFW_REQUIRE_INIT();
 
-    if (window->monitor)
+    if (window->fullscreen)
     {
         _glfwInputError(GLFW_INVALID_VALUE,
                         "Full screen windows cannot be moved");
@@ -481,7 +485,7 @@ GLFWAPI void glfwSetWindowSize(GLFWwindow* handle, int width, int height)
 
     _GLFW_REQUIRE_INIT();
 
-    if (window->monitor)
+    if (window->fullscreen)
     {
         window->videoMode.width  = width;
         window->videoMode.height = height;
@@ -498,7 +502,7 @@ GLFWAPI void glfwSetWindowSizeLimits(GLFWwindow* handle,
 
     _GLFW_REQUIRE_INIT();
 
-    if (window->monitor || !window->resizable)
+    if (window->fullscreen || !window->resizable)
         return;
 
     _glfwPlatformSetWindowSizeLimits(window,
@@ -512,7 +516,7 @@ GLFWAPI void glfwSetWindowAspectRatio(GLFWwindow* handle, int numer, int denom)
 
     _GLFW_REQUIRE_INIT();
 
-    if (window->monitor || !window->resizable)
+    if (window->fullscreen || !window->resizable)
         return;
 
     if (!denom)
@@ -576,8 +580,8 @@ GLFWAPI void glfwShowWindow(GLFWwindow* handle)
 
     _GLFW_REQUIRE_INIT();
 
-    if (window->monitor)
-        return;
+    if (window->fullscreen)
+        _glfwPlatformToggleWindowFullscreen(window);
 
     _glfwPlatformShowWindow(window);
 }
@@ -588,10 +592,19 @@ GLFWAPI void glfwHideWindow(GLFWwindow* handle)
 
     _GLFW_REQUIRE_INIT();
 
-    if (window->monitor)
-        return;
+    if (window->fullscreen)
+        _glfwPlatformToggleWindowFullscreen(window);
 
     _glfwPlatformHideWindow(window);
+}
+
+GLFWAPI void glfwToggleWindowFullscreen(GLFWwindow* handle)
+{
+    _GLFWwindow* window = (_GLFWwindow*) handle;
+
+    _GLFW_REQUIRE_INIT();
+
+	_glfwPlatformToggleWindowFullscreen(window);
 }
 
 GLFWAPI int glfwGetWindowAttrib(GLFWwindow* handle, int attrib)
@@ -614,6 +627,8 @@ GLFWAPI int glfwGetWindowAttrib(GLFWwindow* handle, int attrib)
             return window->decorated;
         case GLFW_FLOATING:
             return window->floating;
+        case GLFW_FULLSCREEN:
+            return window->fullscreen;
         case GLFW_CLIENT_API:
             return window->context.api;
         case GLFW_CONTEXT_VERSION_MAJOR:
