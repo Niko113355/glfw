@@ -28,6 +28,10 @@ add_executable(joysticks joysticks.c ${GLAD})
 add_executable(monitors monitors.c ${GETOPT} ${GLAD})
 add_executable(reopen reopen.c ${GLAD})
 add_executable(cursor cursor.c ${GLAD})
+add_executable(lines lines.c lines.vert lines.frag ${GLAD})
+
+configure_file(${PROJECT_SOURCE_DIR}/tests/lines.vert ${PROJECT_BINARY_DIR}/tests/lines.vert COPYONLY)
+configure_file(${PROJECT_SOURCE_DIR}/tests/lines.frag ${PROJECT_BINARY_DIR}/tests/lines.frag COPYONLY)
 
 add_executable(empty WIN32 MACOSX_BUNDLE empty.c ${TINYCTHREAD} ${GLAD})
 add_executable(sharing WIN32 MACOSX_BUNDLE sharing.c ${GLAD})
@@ -44,7 +48,7 @@ target_link_libraries(threads "${CMAKE_THREAD_LIBS_INIT}" "${RT_LIBRARY}")
 
 set(WINDOWS_BINARIES empty sharing tearing threads title windows options)
 set(CONSOLE_BINARIES clipboard events msaa gamma glfwinfo
-                     iconify joysticks monitors reopen cursor)
+                     iconify joysticks monitors reopen cursor lines)
 
 set_target_properties(${WINDOWS_BINARIES} ${CONSOLE_BINARIES} PROPERTIES
                       FOLDER "GLFW3/Tests")
